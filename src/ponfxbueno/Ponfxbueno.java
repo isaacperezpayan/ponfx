@@ -7,14 +7,14 @@ package ponfxbueno;
 /*Importamos las distintas clases para su posterior utilizacion en objetos*/
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane; /*Layout para colocacion de elementos en ventana*/
 import javafx.scene.paint.Color; /*paint.Color para obtener los distintos colores*/
 import javafx.scene.shape.Circle; /*Importamos Clase geometrica (Circulo)*/
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 
 /**
@@ -33,8 +33,10 @@ public class Ponfxbueno extends Application {
     int stickPosy = (SCENE_TAM_Y - STICK_HEIGHT) / 2;
     int stickCurrentSpeed = 0;
     
+    
     @Override
     public void start(Stage primaryStage) {
+        
         Pane root= new Pane();
         Scene scene = new Scene (root, SCENE_TAM_X, SCENE_TAM_Y);
         scene.setFill(Color.YELLOW);
@@ -48,8 +50,29 @@ public class Ponfxbueno extends Application {
         AnimationTimer movimiento;
         Rectangle rectStick = new Rectangle (SCENE_TAM_X*0.9, stickPosy, STICK_WIDTH, STICK_HEIGHT);
         rectStick.setFill(Color.GREEN);
+        //Creacion de la red del campo
+        for(int i=0; i<SCENE_TAM_Y; i+=30){
+        Line line = new Line(SCENE_TAM_X/2, i, SCENE_TAM_X/2, i+10);
+        line.setStroke(Color.BLUE);
+        line.setStrokeWidth(4);
+        root.getChildren().add(line);
+        }
+        // Creacion del movimiento de la pala y bola
         movimiento = new AnimationTimer() {
+            //Actualizar la posicion de la pala
+                
             public void handle(long now) {
+                stickPosy += stickCurrentSpeed;
+                if(stickPosy < 0) {
+                    //No sobrepasar el borde superior de la ventana
+                    stickPosy = 0;
+                } else {
+                    if(stickPosy > SCENE_TAM_Y - STICK_HEIGHT) {
+                        stickPosy = SCENE_TAM_Y - STICK_HEIGHT; 
+                    }
+                  }
+                //Mover rectangulo de la pala a la posicion actual
+                rectStick.setY(stickPosy);
                 bola.setCenterX(bolaCenterX);
                 bolaCenterX+= velocidadbolax;
                 if (bolaCenterX >= SCENE_TAM_X){
@@ -66,10 +89,9 @@ public class Ponfxbueno extends Application {
                 if (bolaCenterY <= 0){
                     velocidadbolay = 3;
                 }
-            };
-        };
-        scene.setOnKeyReleased((KeyEvent event) -> {
-            switch(event.getCode()){
+                
+                scene.setOnKeyPressed((KeyEvent event) -> {
+                switch(event.getCode()){
                 case UP:
                     //Pulsada tecla arriba
                     stickCurrentSpeed = -6;
@@ -80,16 +102,26 @@ public class Ponfxbueno extends Application {
                     break;
             }
         });
-        
-        scene.setOnKeyReleased((KeyEvent event) -> {
-            stickCurrentSpeed= 0;
+                Shape.intersect(bola, rectStick);
+                Shape shapeColision = Shape.intersect(bola, rectStick);
+                boolean colisionVacia = shapeColision.getBoundsInLocal().isEmpty();
+                if(colisionVacia == false){
+                    //Colision detectada. Mover bola hacia la izquierda
+                    velocidadbolax = -3;
+                }
+                scene.setOnKeyReleased((KeyEvent event) -> {
+                    stickCurrentSpeed= 0;
              
-        });
+                });
+            };
+        };
+        
         
         root.getChildren().add(bola);
         root.getChildren().add(rectStick);
         bola.setFill(Color.PURPLE);
         movimiento.start();
+        
         /*Codigo anterior simplificado de las disntintas clases y objetos*/
         /*Scene scene = new Scene(root, 600, 400, Color.YELLOW);
         Circle bola = new Circle(10, 30, 7, Color.PURPLE);
